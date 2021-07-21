@@ -25,7 +25,6 @@
 setupLivePrefs();
 setupRadioButtons();
 $$('input[min], input[max]').forEach(enforceInputRange);
-setTimeout(splitLongTooltips);
 
 if (CHROME_POPUP_BORDER_BUG) {
   const borderOption = $('.chrome-no-popup-border');
@@ -87,15 +86,6 @@ document.onclick = e => {
         .filter(input => prefs.knownKeys.includes(input.id))
         .forEach(input => prefs.reset(input.id));
       break;
-
-    case 'note': {
-      e.preventDefault();
-      messageBoxProxy.show({
-        className: 'note',
-        contents: target.dataset.title,
-        buttons: [t('confirmClose')],
-      });
-    }
   }
 };
 
@@ -227,22 +217,6 @@ function setupRadioButtons() {
   prefs.subscribe(Object.keys(sets), (key, value) => {
     sets[key][value].checked = true;
   });
-}
-
-function splitLongTooltips() {
-  for (const el of $$('[title]')) {
-    el.dataset.title = el.title;
-    el.title = el.title.replace(/<\/?\w+>/g, ''); // strip html tags
-    if (el.title.length < 50) {
-      continue;
-    }
-    const newTitle = el.title
-      .split('\n')
-      .map(s => s.replace(/([^.][.。?!]|.{50,60},)\s+/g, '$1\n'))
-      .map(s => s.replace(/(.{50,80}(?=.{40,}))\s+/g, '$1\n'))
-      .join('\n');
-    if (newTitle !== el.title) el.title = newTitle;
-  }
 }
 
 function customizeHotkeys() {

@@ -622,6 +622,18 @@
     "message": "Get styles",
     "description": "Help link text on the manage page e.g. https://userstyles.org"
   },
+  "linkGetStylesInfo": {
+    "message": "This archive site was created by a userstyle community member to backup the slow and unresponsive userstyles.org. The archive updates its contents approximately once a day.",
+    "description": "Info shown when clicking the (i) icon of the uso-archive link in the manager"
+  },
+  "linkGetShareStyles": {
+    "message": "Get and share styles",
+    "description": "Link text for https://userstyles.world/ on the manage page"
+  },
+  "linkGetShareStylesInfo": {
+    "message": "The new community-driven userstyles.world site is created by userstyle authors in order to replace userstyles.org, which has been so slow and unresponsive for the past year that many authors stopped updating their styles.",
+    "description": "Info shown when clicking the (i) icon of the userstyles.world link in the manager"
+  },
   "linkStylusWiki": {
     "message": "Wiki",
     "description": "Wiki link text on the manage page e.g. https://github.com/openstyles/stylus/wiki"
@@ -629,10 +641,6 @@
   "linkTranslate": {
     "message": "Translate",
     "description": "Transifex link text on the manage page"
-  },
-  "linkUSW": {
-    "message": "Upload and discover styles on userstyles.world",
-    "description": "Link text for https://userstyles.world/ on the manage page"
   },
   "linterCSSLintIncompatible": {
     "message": "CSSLint doesn't support $preprocessorname$ preprocessor",
