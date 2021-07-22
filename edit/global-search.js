@@ -1,4 +1,4 @@
-/* global $ $$ $create $remove focusAccessibility */// dom.js
+/* global $ $$ $create $remove focusAccessibility toggleDataset */// dom.js
 /* global CodeMirror */
 /* global chromeLocal */// storage-util.js
 /* global colorMimicry */
@@ -872,15 +872,6 @@
       saveWindowScrollPos();
       el.focus({preventScroll: true});
       restoreWindowScrollPos({immediately: false});
-    }
-  }
-
-
-  function toggleDataset(el, prop, state) {
-    if (state) {
-      el.dataset[prop] = '';
-    } else {
-      delete el.dataset[prop];
     }
   }
 

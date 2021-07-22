@@ -452,6 +452,9 @@
     "message": "Clone",
     "description": "Used in various places for an action that clones something"
   },
+  "genericDescription": {
+    "message": "Description"
+  },
   "genericDisabledLabel": {
     "message": "Disabled",
     "description": "Used in various lists/options to indicate that something is disabled"
@@ -1242,6 +1245,25 @@
     "message": "Temporarily applies the changes without saving.\nSave the style to make the changes permanent.",
     "description": "Tooltip for the checkbox in style editor to enable live preview while editing."
   },
+  "publish": {
+    "message": "Publish",
+    "description": "Header for the section to link the style with userStyles.world"
+  },
+  "publishRetry": {
+    "message": "Stylus is still trying to publish this style, but you can retry if you see no authentication activity or popups. Retry now?"
+  },
+  "publishRevoke": {
+    "message": "Revoke link",
+    "description": "Revoke current link of style with userstyles.world"
+  },
+  "publishStyle": {
+    "message": "Publish style",
+    "description": "Publish the current style to userstyles.world"
+  },
+  "publishUsw": {
+    "message": "Using https://userstyles.world",
+    "description": "Name of the link to https://userstyles.world in the editor"
+  },
   "readingStyles": {
     "message": "Reading styles..."
   },
@@ -1365,18 +1387,6 @@
     "message": "Sections",
     "description": "Header for the table of contents block listing style section names in the left panel of the classic editor"
   },
-  "integration": {
-    "message": "UserStyles.world integration",
-    "description": "Header for the section to link the style with userStyles.world"
-  },
-  "uploadStyle": {
-    "message": "Publish style",
-    "description": "Publish the current style to userstyles.world"
-  },
-  "revokeLink": {
-    "message": "Revoke link",
-    "description": "Revoke current link of style with userstyles.world"
-  },
   "shortcuts": {
     "message": "Shortcuts",
     "description": "Go to shortcut configuration"
@@ -1492,6 +1502,9 @@
   "styleMozillaFormatHeading": {
     "message": "Mozilla Format",
     "description": "Heading for the section with buttons to import/export Mozilla format of the style"
+  },
+  "styleName": {
+    "message": "Style name"
   },
   "styleNotAppliedRegexpProblemTooltip": {
     "message": "Style was not applied due to its incorrect usage of 'regexp()'",

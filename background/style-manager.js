@@ -6,8 +6,6 @@
 /* global prefs */
 /* global tabMan */
 /* global usercssMan */
-/* global tokenMan */
-/* global retrieveStyleInformation uploadStyle */// usw-api.js
 'use strict';
 
 /*
@@ -63,7 +61,6 @@ const styleMan = (() => {
   let ready = init();
 
   chrome.runtime.onConnect.addListener(handleLivePreview);
-  chrome.runtime.onConnect.addListener(handlePublishingUSW);
 
   //#endregion
   //#region Exports
@@ -74,16 +71,21 @@ const styleMan = (() => {
     async delete(id, reason) {
       if (ready.then) await ready;
       const data = id2data(id);
+      const {style, appliesTo} = data;
       await db.exec('delete', id);
       if (reason !== 'sync') {
-        API.sync.delete(data.style._id, Date.now());
+        API.sync.delete(style._id, Date.now());
       }
-      for (const url of data.appliesTo) {
+      for (const url of appliesTo) {
         const cache = cachedStyleForUrl.get(url);
         if (cache) delete cache.sections[id];
       }
       dataMap.delete(id);
-      uuidIndex.delete(data.style._id);
+      uuidIndex.delete(style._id);
+      if (style._usw && style._usw.token) {
+        // Must be called after the style is deleted from dataMap
+        API.usw.revoke(id);
+      }
       await msg.broadcast({
         method: 'styleDeleted',
         style: {id},
@@ -107,7 +109,7 @@ const styleMan = (() => {
       if (ready.then) await ready;
       style = mergeWithMapped(style);
       style.updateDate = Date.now();
-      return handleSave(await saveStyle(style), {reason: 'editSave'});
+      return saveStyle(style, {reason: 'editSave'});
     },
 
     /** @returns {Promise<?StyleObj>} */
@@ -240,7 +242,7 @@ const styleMan = (() => {
       if (url) style.url = style.installationUrl = url;
       style.originalDigest = await calcStyleDigest(style);
       // FIXME: update updateDate? what about usercss config?
-      return handleSave(await saveStyle(style), {reason});
+      return saveStyle(style, {reason});
     },
 
     /** @returns {Promise<?StyleObj>} */
@@ -268,11 +270,13 @@ const styleMan = (() => {
       }
     },
 
+    save: saveStyle,
+
     /** @returns {Promise<number>} style id */
     async toggle(id, enabled) {
       if (ready.then) await ready;
       const style = Object.assign({}, id2style(id), {enabled});
-      handleSave(await saveStyle(style), {reason: 'toggle', codeIsUpdated: false});
+      await saveStyle(style, {reason: 'toggle', codeIsUpdated: false});
       return id;
     },
 
@@ -356,65 +360,6 @@ const styleMan = (() => {
     });
   }
 
-  function handlePublishingUSW(port) {
-    if (port.name !== 'link-style-usw') {
-      return;
-    }
-    port.onMessage.addListener(async incData => {
-      const {data: style, reason} = incData;
-      if (!style.id) {
-        return;
-      }
-      switch (reason) {
-        case 'revoke':
-          await tokenMan.revokeToken('userstylesworld', style.id);
-          style._usw = {};
-          handleSave(await saveStyle(style), {reason: 'success-revoke', codeIsUpdated: true});
-          break;
-
-        case 'publish': {
-          if (!style._usw || !style._usw.token) {
-            for (const {style: someStyle} of dataMap.values()) {
-              if (someStyle._id === style._id) {
-                someStyle.tmpSourceCode = style.sourceCode;
-                let metadata = {};
-                try {
-                  const {metadata: tmpMetadata} = await API.worker.parseUsercssMeta(style.sourceCode);
-                  metadata = tmpMetadata;
-                } catch (err) {
-                  console.log(err);
-                }
-                someStyle.metadata = metadata;
-              } else {
-                delete someStyle.tmpSourceCode;
-                delete someStyle.metadata;
-              }
-              handleSave(await saveStyle(someStyle), {broadcast: false});
-            }
-            style._usw = {
-              token: await tokenMan.getToken('userstylesworld', true, style.id),
-            };
-
-            delete style.tmpSourceCode;
-            delete style.metadata;
-            for (const [k, v] of Object.entries(await retrieveStyleInformation(style._usw.token))) {
-              style._usw[k] = v;
-            }
-            handleSave(await saveStyle(style), {reason: 'success-publishing', codeIsUpdated: true});
-          }
-
-          const returnResult = await uploadStyle(style);
-          // USw prefix errors with `Error:`.
-          if (returnResult.startsWith('Error:')) {
-            style._usw.publishingError = returnResult;
-            handleSave(await saveStyle(style), {reason: 'publishing-failed', codeIsUpdated: true});
-          }
-          break;
-        }
-      }
-    });
-  }
-
   async function addIncludeExclude(type, id, rule) {
     if (ready.then) await ready;
     const style = Object.assign({}, id2style(id));
@@ -423,7 +368,7 @@ const styleMan = (() => {
       throw new Error('The rule already exists');
     }
     style[type] = list.concat([rule]);
-    return handleSave(await saveStyle(style), {reason: 'styleSettings'});
+    return saveStyle(style, {reason: 'styleSettings'});
   }
 
   async function removeIncludeExclude(type, id, rule) {
@@ -434,7 +379,7 @@ const styleMan = (() => {
       return;
     }
     style[type] = list.filter(r => r !== rule);
-    return handleSave(await saveStyle(style), {reason: 'styleSettings'});
+    return saveStyle(style, {reason: 'styleSettings'});
   }
 
   function broadcastStyleUpdated(style, reason, method = 'styleUpdated', codeIsUpdated = true) {
@@ -490,14 +435,14 @@ const styleMan = (() => {
       style.id = newId;
     }
     uuidIndex.set(style._id, style.id);
-    API.sync.put(style._id, style._rev, style._usw);
+    API.sync.put(style._id, style._rev);
   }
 
-  async function saveStyle(style) {
+  async function saveStyle(style, handlingOptions) {
     beforeSave(style);
     const newId = await db.exec('put', style);
     afterSave(style, newId);
-    return style;
+    return handleSave(style, handlingOptions);
   }
 
   function handleSave(style, {reason, codeIsUpdated, broadcast = true}) {
@@ -528,9 +473,7 @@ const styleMan = (() => {
 
   async function init() {
     const styles = await db.exec('getAll') || [];
-    const updated = styles.filter(style =>
-      addMissingProps(style) +
-      addCustomName(style));
+    const updated = styles.filter(fixOldStyleProps);
     if (updated.length) {
       await db.exec('putMany', updated);
     }
@@ -543,7 +486,7 @@ const styleMan = (() => {
     bgReady._resolveStyles();
   }
 
-  function addMissingProps(style) {
+  function fixOldStyleProps(style) {
     let res = 0;
     for (const key in MISSING_PROPS) {
       if (!style[key]) {
@@ -551,20 +494,15 @@ const styleMan = (() => {
         res = 1;
       }
     }
-    return res;
-  }
-
-  /** Upgrades the old way of customizing local names */
-  function addCustomName(style) {
-    let res = 0;
+    /* Upgrade the old way of customizing local names */
     const {originalName} = style;
     if (originalName) {
-      res = 1;
       if (originalName !== style.name) {
         style.customName = style.name;
         style.name = originalName;
       }
       delete style.originalName;
+      res = 1;
     }
     return res;
   }

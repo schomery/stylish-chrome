@@ -13,6 +13,7 @@
   moveFocus
   scrollElementIntoView
   setupLivePrefs
+  toggleDataset
   waitForSheet
 */
 
@@ -322,6 +323,14 @@ function setupLivePrefs(ids = prefs.knownKeys.filter(id => $('#' + id))) {
     } else {
       prefs.unsubscribe(ids, updateElement);
     }
+  }
+}
+
+function toggleDataset(el, prop, state) {
+  if (state) {
+    el.dataset[prop] = '';
+  } else {
+    delete el.dataset[prop];
   }
 }
 

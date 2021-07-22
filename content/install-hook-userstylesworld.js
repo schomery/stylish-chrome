@@ -19,9 +19,8 @@
 
       if (location.pathname === '/api/oauth/style/new') {
         const styleId = Number(new URLSearchParams(location.search).get('vendor_data'));
-        API.styles.get(styleId).then(style => {
-          style.sourceCode = style.tmpSourceCode;
-          sendPostMessage({type: 'usw-fill-new-style', data: style});
+        API.data.pop('usw' + styleId).then(data => {
+          sendPostMessage({type: 'usw-fill-new-style', data});
         });
       }
     }

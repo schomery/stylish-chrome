@@ -242,7 +242,7 @@
 
   <body id="stylus-edit">
     <div id="header">
-      <h1 id="heading">&nbsp;</h1> <!-- nbsp allocates the actual height which prevents page shift -->
+      <h1 id="heading" i18n-data-edit="editStyleHeading" i18n-data-add="addStyleTitle"></h1>
       <section id="basic-info">
         <div id="basic-info-name">
           <input id="name" class="style-contributor" spellcheck="false">
@@ -262,7 +262,7 @@
             <input type="checkbox" id="enabled" class="style-contributor">
             <svg class="svg-icon checked"><use xlink:href="#svg-icon-checked"/></svg>
           </label>
-          <label id="preview-label" i18n-text="previewLabel" i18n-title="previewTooltip" class="hidden">
+          <label id="preview-label" i18n-text="previewLabel" i18n-title="previewTooltip">
             <input type="checkbox" id="editor.livePreview">
             <svg class="svg-icon checked"><use xlink:href="#svg-icon-checked"/></svg>
           </label>
@@ -392,11 +392,18 @@
             </div>
           </div>
         </details>
-        <details id="integration" data-pref="editor.integration.expanded" class="ignore-pref-if-compact">
-          <summary><h2 i18n-text="integration"></h2></summary>
+        <details id="publish" data-pref="editor.publish.expanded" class="ignore-pref-if-compact">
+          <summary><h2 i18n-text="publish"></h2></summary>
           <div>
-            <button id="publish-style" i18n-text="uploadStyle"></button>
-            <button id="revoke-link" i18n-text="revokeLink"></button>
+            <a href="https://userstyles.world" i18n-text-append="publishUsw" target="_blank"></a>
+            <div id="usw-link-info">
+              <dl><dt i18n-text="styleName"></dt><dd id="usw-style-name"></dd></dl>
+              <dl><dt i18n-text="genericDescription"></dt><dd id="usw-style-descr"></dd></dl>
+            </div>
+            <div>
+              <button id="usw-publish-style" i18n-text="publishStyle"></button>
+              <button id="usw-revoke-link" i18n-text="publishRevoke"></button>
+            </div>
           </div>
         </details>
         <details id="sections-list" data-pref="editor.toc.expanded" class="ignore-pref-if-compact">

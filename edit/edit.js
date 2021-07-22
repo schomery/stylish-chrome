@@ -11,7 +11,6 @@
 /* global linterMan */
 /* global prefs */
 /* global t */// localization.js
-/* global updateUI revokeLinking publishStyle */// usw-integration.js
 'use strict';
 
 //#region init
@@ -19,7 +18,6 @@
 baseInit.ready.then(async () => {
   await waitForSheet();
   (editor.isUsercss ? SourceEditor : SectionsEditor)();
-  updateUI();
   await editor.ready;
   editor.ready = true;
   editor.dirty.onChange(editor.updateDirty);
@@ -44,33 +42,29 @@ baseInit.ready.then(async () => {
     require(['/edit/linter-dialogs'], () => linterMan.showLintConfig());
   $('#lint-help').onclick = () =>
     require(['/edit/linter-dialogs'], () => linterMan.showLintHelp());
-  $('#revoke-link').onclick = () => revokeLinking();
-  $('#publish-style').onclick = () => publishStyle();
   require([
     '/edit/autocomplete',
     '/edit/global-search',
   ]);
 });
 
+//#endregion
+//#region events
+
+const IGNORE_UPDATE_REASONS = [
+  'editPreview',
+  'editPreviewEnd',
+  'editSave',
+  'config',
+];
+
 msg.onExtension(request => {
   const {style} = request;
   switch (request.method) {
     case 'styleUpdated':
-      if (editor.style.id === style.id) {
-        if (!['editPreview', 'editPreviewEnd', 'editSave', 'config'].includes(request.reason)) {
-          Promise.resolve(request.codeIsUpdated === false ? style : API.styles.get(style.id))
-            .then(newStyle => {
-              editor.replaceStyle(newStyle, request.codeIsUpdated);
-
-              if (['success-publishing', 'success-revoke'].includes(request.reason)) {
-                updateUI(newStyle);
-              }
-              if (request.reason === 'publishing-failed') {
-                messageBoxProxy.alert(newStyle._usw.publishingError, 'pre',
-                  'UserStyles.world: ' + t('genericError'));
-              }
-            });
-        }
+      if (editor.style.id === style.id && !IGNORE_UPDATE_REASONS.includes(request.reason)) {
+        Promise.resolve(request.codeIsUpdated === false ? style : API.styles.get(style.id))
+          .then(newStyle => editor.replaceStyle(newStyle, request.codeIsUpdated));
       }
       break;
     case 'styleDeleted':
@@ -258,14 +252,10 @@ editor.livePreview = (() => {
 
     /**
      * @param {Function} [fn] - preprocessor
-     * @param {boolean} [show]
      */
-    init(fn, show) {
+    init(fn) {
       preprocess = fn;
-      if (show != null) toggle(show);
     },
-
-    toggle,
 
     update(newData) {
       data = newData;
@@ -284,10 +274,6 @@ editor.livePreview = (() => {
     port.onDisconnect.addListener(err => {
       throw err;
     });
-  }
-
-  function toggle(state) {
-    $('#preview-label').classList.toggle('hidden', !state);
   }
 
   async function updatePreviewer(data) {

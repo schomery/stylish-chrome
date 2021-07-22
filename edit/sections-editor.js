@@ -25,7 +25,7 @@ function SectionsEditor() {
 
   updateHeader();
   rerouteHotkeys.toggle(true); // enabled initially because we don't always focus a CodeMirror
-  editor.livePreview.init(null, style.id);
+  editor.livePreview.init();
   container.classList.add('section-editor');
   $('#to-mozilla').on('click', showMozillaFormat);
   $('#to-mozilla-help').on('click', showToMozillaHelp);
@@ -86,14 +86,13 @@ function SectionsEditor() {
         await initSections(newStyle.sections, {replace: true});
       }
       Object.assign(style, newStyle);
+      editor.onStyleUpdated();
       updateHeader();
       dirty.clear();
       // Go from new style URL to edit style URL
-      if (location.href.indexOf('id=') === -1 && style.id) {
-        history.replaceState({}, document.title, 'edit.html?id=' + style.id);
-        $('#heading').textContent = t('editStyleHeading');
+      if (style.id && !/[&?]id=/.test(location.search)) {
+        history.replaceState({}, document.title, `${location.pathname}?id=${style.id}`);
       }
-      editor.livePreview.toggle(Boolean(style.id));
       updateLivePreview();
     },
 

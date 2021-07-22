@@ -6,6 +6,7 @@
 /* global syncMan */
 /* global updateMan */
 /* global usercssMan */
+/* global uswApi */
 /* global
   FIREFOX
   URLS
@@ -20,10 +21,26 @@
 
 addAPI(/** @namespace API */ {
 
+  /** Temporary storage for data needed elsewhere e.g. in a content script */
+  data: ((data = {}) => ({
+    del: key => delete data[key],
+    get: key => data[key],
+    has: key => key in data,
+    pop: key => {
+      const val = data[key];
+      delete data[key];
+      return val;
+    },
+    set: (key, val) => {
+      data[key] = val;
+    },
+  }))(),
+
   styles: styleMan,
   sync: syncMan,
   updater: updateMan,
   usercss: usercssMan,
+  usw: uswApi,
   /** @type {BackgroundWorker} */
   worker: createWorker({url: '/background/background-worker'}),
 

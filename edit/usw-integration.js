@@ -1,49 +1,56 @@
-/* global $ $create $remove */// dom.js
+/* global $ messageBoxProxy toggleDataset */// dom.js
+/* global API msg */// msg.js
+/* global baseInit */
 /* global editor */
-
+/* global t */// localization.js
 'use strict';
 
-let uswPort;
+(() => {
+  const ERROR_TITLE = 'UserStyles.world ' + t('genericError');
 
-function connectToPort() {
-  if (!uswPort) {
-    uswPort = chrome.runtime.connect({name: 'link-style-usw'});
-    uswPort.onDisconnect.addListener(err => {
-      throw err;
-    });
+  msg.onExtension(request => {
+    if (request.method === 'uswData' &&
+        request.style.id === editor.style.id) {
+      Object.assign(editor.style, request.style);
+      updateUI();
+    }
+  });
+
+  baseInit.ready.then(() => {
+    updateUI();
+    $('#usw-publish-style').onclick = disableWhileActive(publishStyle);
+    $('#usw-revoke-link').onclick = disableWhileActive(revokeLink);
+  });
+
+  async function publishStyle() {
+    const {id} = editor.style;
+    if (await API.data.has('usw' + id) &&
+        !await messageBoxProxy.confirm(t('publishRetry'), 'danger', ERROR_TITLE)) {
+      return;
+    }
+    const code = editor.getEditors()[0].getValue();
+    const res = await API.usw.publish(id, code);
+    const err = /^Error:\s*(.*)|$/.exec(res)[1];
+    if (err) messageBoxProxy.alert(err, 'pre-line danger', ERROR_TITLE);
   }
-}
 
-
-/* exported revokeLinking */
-function revokeLinking() {
-  connectToPort();
-
-  uswPort.postMessage({reason: 'revoke', data: editor.style});
-}
-
-/* exported publishStyle */
-function publishStyle() {
-  connectToPort();
-  const data = Object.assign(editor.style, {sourceCode: editor.getEditors()[0].getValue()});
-  uswPort.postMessage({reason: 'publish', data});
-}
-
-
-/* exported updateUI */
-function updateUI(useStyle) {
-  const style = useStyle || editor.style;
-  if (style._usw && style._usw.token) {
-    $('#revoke-link').style = '';
-
-    const linkInformation = $create('div', {id: 'link-info'}, [
-      $create('p', `Style name: ${style._usw.name}`),
-      $create('p', `Description: ${style._usw.description}`),
-    ]);
-    $remove('#link-info');
-    $('#integration').insertBefore(linkInformation, $('#integration').firstChild);
-  } else {
-    $('#revoke-link').style = 'display: none;';
-    $remove('#link-info');
+  async function revokeLink() {
+    await API.usw.revoke(editor.style.id);
   }
-}
+
+  function updateUI(style = editor.style) {
+    const usw = style._usw || {};
+    toggleDataset($('#publish'), 'connected', usw.token);
+    $('#usw-style-name').textContent = usw.name || '';
+    $('#usw-style-descr').textContent = usw.description || '';
+  }
+
+  function disableWhileActive(fn) {
+    /** @this {Element} */
+    return async function () {
+      this.disabled = true;
+      await fn().catch(console.error);
+      this.disabled = false;
+    };
+  }
+})();

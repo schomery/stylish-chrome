@@ -21,6 +21,7 @@
  * @namespace Editor
  */
 const editor = {
+  style: null,
   dirty: DirtyReporter(),
   isUsercss: false,
   isWindowed: false,
@@ -33,6 +34,10 @@ const editor = {
   nameTarget: 'name',
   previewDelay: 200, // Chrome devtools uses 200
   scrollInfo: null,
+
+  onStyleUpdated() {
+    document.documentElement.classList.toggle('is-new-style', !editor.style.id);
+  },
 
   updateTitle(isDirty = editor.dirty.isDirty()) {
     const {customName, name} = editor.style;
@@ -84,6 +89,7 @@ const baseInit = (() => {
     // switching the mode here to show the correct page ASAP, usually before DOMContentLoaded
     editor.isUsercss = Boolean(style.usercssData || !style.id && prefs.get('newStyleAsUsercss'));
     editor.style = style;
+    editor.onStyleUpdated();
     editor.updateTitle(false);
     document.documentElement.classList.toggle('usercss', editor.isUsercss);
     sessionStore.justEditedStyleId = style.id || '';
@@ -132,8 +138,7 @@ baseInit.domReady.then(() => {
       document.body.classList.remove('compact-layout', 'fixed-header');
       window.off('scroll', fixedHeader);
     }
-    for (const type of ['options', 'toc', 'lint']) {
-      const el = $(`details[data-pref="editor.${type}.expanded"]`);
+    for (const el of $$('details[data-pref]')) {
       el.open = compact ? false : prefs.get(el.dataset.pref);
     }
   }
@@ -160,9 +165,6 @@ baseInit.ready.then(() => {
   initNameArea();
   initThemeElement();
   setupLivePrefs();
-
-  $('#heading').textContent = t(editor.style.id ? 'editStyleHeading' : 'addStyleTitle');
-  $('#preview-label').classList.toggle('hidden', !editor.style.id);
 
   require(Object.values(editor.lazyKeymaps), () => {
     initKeymapElement();

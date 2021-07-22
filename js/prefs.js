@@ -61,7 +61,7 @@
     'editor.toc.expanded': true,    // UI element state: expanded/collapsed
     'editor.options.expanded': true, // UI element state: expanded/collapsed
     'editor.lint.expanded': true,   // UI element state: expanded/collapsed
-    'editor.integration.expanded': true, // UI element state expanded/collapsed
+    'editor.publish.expanded': true, // UI element state expanded/collapsed
     'editor.lineWrapping': true,    // word wrap
     'editor.smartIndent': true,     // 'smart' indent
     'editor.indentWithTabs': false, // smart indent with tabs
